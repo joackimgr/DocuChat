@@ -2,13 +2,17 @@
 
 import { useState } from "react";
 import { useDropzone } from "react-dropzone";
+import dynamic from 'next/dynamic'
 import IdleView from './IdleView'
-import AcceptView from './AcceptView'
 import RejectView from './RejectView'
+const AcceptView = dynamic(() => import('./AcceptView'), {
+  ssr: false,
+})
 
 export default function Home() {
   const [status, setStatus] = useState<"idle" | "accepted" | "rejected">("idle");
   const [pdfName, setPdfName] = useState('')
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
@@ -16,7 +20,10 @@ export default function Home() {
     onDrop: (file) => {
       setStatus(file.length > 0 ? "accepted" : "rejected"); 
       console.log(file); 
-      if (file[0]) setPdfName(file[0].name)},
+      if (file[0]) {
+        setPdfName(file[0].name)}
+        setPdfFile(file[0])
+      }
   });
 
   const styles = {
@@ -43,6 +50,7 @@ export default function Home() {
           active={active}
           isFilled={isFilled}
           pdfName={pdfName}
+          pdfFile={pdfFile}
         />
       }
       {status === "rejected" && 
