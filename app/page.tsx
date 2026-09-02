@@ -1,13 +1,7 @@
 'use client'
 
 import { useState } from "react";
-import { useDropzone } from "react-dropzone";
-// import dynamic from 'next/dynamic'
-// import IdleView from './IdleView'
-// import RejectView from './RejectView'
-// const AcceptView = dynamic(() => import('./AcceptView'), {
-//   ssr: false,
-// })
+import { FileRejection, useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
 
 export default function Home() {
@@ -18,14 +12,13 @@ export default function Home() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
     maxFiles: 1,
-    onDrop: (file) => {
-      setStatus(file.length > 0 ? "accepted" : "rejected"); 
-      console.log(file); 
-      if (file[0]) {
-        setPdfName(file[0].name)}
-        setPdfFile(file[0])
-      }
-  });
+    onDrop: (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      setStatus(acceptedFiles.length > 0 ? "accepted" : "rejected"); 
+      if (acceptedFiles[0]) {
+        setPdfName(acceptedFiles[0].name)
+        setPdfFile(acceptedFiles[0])
+      }}
+   });
 
   function setIdle() {
     setStatus('idle')
@@ -42,27 +35,6 @@ export default function Home() {
 
   return (
     <section className="flex justify-center items-center min-h-screen">
-        {/* {status === "idle" &&
-            <IdleView 
-              getRootProps={getRootProps}
-              getInputProps={getInputProps}
-              active={active}
-              isFilled={isFilled}
-            />
-        }
-        {status === "accepted" && 
-            <AcceptView
-              active={active}
-              isFilled={isFilled}
-              pdfName={pdfName}
-              pdfFile={pdfFile}
-            />
-        }
-        {status === "rejected" && 
-            <RejectView
-              active={active}
-            />
-        } */}
         <PdfUpload 
           getRootProps={getRootProps}
           getInputProps={getInputProps}
