@@ -1,13 +1,7 @@
 'use client'
 
 import { useState } from "react";
-import { useDropzone } from "react-dropzone";
-// import dynamic from 'next/dynamic'
-// import IdleView from './IdleView'
-// import RejectView from './RejectView'
-// const AcceptView = dynamic(() => import('./AcceptView'), {
-//   ssr: false,
-// })
+import { FileRejection, useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
 
 export default function Home() {
@@ -18,17 +12,38 @@ export default function Home() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
     maxFiles: 1,
-    onDrop: (file) => {
-      setStatus(file.length > 0 ? "accepted" : "rejected"); 
-      console.log(file); 
-      if (file[0]) {
-        setPdfName(file[0].name)}
-        setPdfFile(file[0])
+    onDrop: async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      if (!acceptedFiles[0]) { setStatus("rejected"); return;}
+      const fd = new FormData()
+      fd.append('file', acceptedFiles[0])
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: fd})
+        if (!res.ok) { 
+          const err = await res.json()
+          setStatus("rejected")
+          setPdfFile(null)
+          setPdfName('')
+          console.error(err.error)
+          return;
+        }
+        const data = await res.json()
+        console.log(data)
+      } catch (e) {
+          console.error(e)
+          setStatus("rejected")
+          setPdfFile(null)
+          setPdfName('')
+          return;
       }
-  });
+      setPdfName(acceptedFiles[0].name)
+      setPdfFile(acceptedFiles[0])
+      setStatus("accepted")
+  }});
 
   function setIdle() {
     setStatus('idle')
+    setPdfFile(null)
+    setPdfName('')
   }
 
   const styles = {
@@ -42,27 +57,6 @@ export default function Home() {
 
   return (
     <section className="flex justify-center items-center min-h-screen">
-        {/* {status === "idle" &&
-            <IdleView 
-              getRootProps={getRootProps}
-              getInputProps={getInputProps}
-              active={active}
-              isFilled={isFilled}
-            />
-        }
-        {status === "accepted" && 
-            <AcceptView
-              active={active}
-              isFilled={isFilled}
-              pdfName={pdfName}
-              pdfFile={pdfFile}
-            />
-        }
-        {status === "rejected" && 
-            <RejectView
-              active={active}
-            />
-        } */}
         <PdfUpload 
           getRootProps={getRootProps}
           getInputProps={getInputProps}
