@@ -12,16 +12,38 @@ export default function Home() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
     maxFiles: 1,
-    onDrop: (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      setStatus(acceptedFiles.length > 0 ? "accepted" : "rejected"); 
-      if (acceptedFiles[0]) {
-        setPdfName(acceptedFiles[0].name)
-        setPdfFile(acceptedFiles[0])
-      }}
-   });
+    onDrop: async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      if (!acceptedFiles[0]) { setStatus("rejected"); return;}
+      const fd = new FormData()
+      fd.append('file', acceptedFiles[0])
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: fd})
+        if (!res.ok) { 
+          const err = await res.json()
+          setStatus("rejected")
+          setPdfFile(null)
+          setPdfName('')
+          console.error(err.error)
+          return;
+        }
+        const data = await res.json()
+        console.log(data)
+      } catch (e) {
+          console.error(e)
+          setStatus("rejected")
+          setPdfFile(null)
+          setPdfName('')
+          return;
+      }
+      setPdfName(acceptedFiles[0].name)
+      setPdfFile(acceptedFiles[0])
+      setStatus("accepted")
+  }});
 
   function setIdle() {
     setStatus('idle')
+    setPdfFile(null)
+    setPdfName('')
   }
 
   const styles = {
