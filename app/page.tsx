@@ -5,10 +5,10 @@ import { FileRejection, useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
 
 export default function Home() {
-  const [status, setStatus] = useState<"idle" | "accepted" | "rejected">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "accepted" | "rejected">("idle");
   const [pdfName, setPdfName] = useState('')
   const [pdfFile, setPdfFile] = useState<File | null>(null)
-
+  
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
     maxFiles: 1,
@@ -16,6 +16,7 @@ export default function Home() {
       if (!acceptedFiles[0]) { setStatus("rejected"); return;}
       const fd = new FormData()
       fd.append('file', acceptedFiles[0])
+      setStatus("uploading")
       try {
         const res = await fetch('/api/upload', { method: 'POST', body: fd})
         if (!res.ok) { 
@@ -48,6 +49,7 @@ export default function Home() {
 
   const styles = {
     idle:     { border: "border-red-300", icon: "text-red-400" },
+    uploading: { border: "border-yellow-300", icon: "text-yellow-400" },
     accepted: { border: "border-green-400", icon: "text-green-400" },
     rejected: { border: "border-red-500", icon: "text-red-500" },
   };
