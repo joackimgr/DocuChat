@@ -6,8 +6,10 @@ import type { DropzoneRootProps, DropzoneInputProps } from "react-dropzone"
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { Card, CardContent } from '@/components/ui/card'
+import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
+import ModelModal from "./ModelModal"
 
 const PdfPreviewModal = dynamic(() => import('./PdfPreviewModal'), {
     ssr: false,
@@ -24,12 +26,13 @@ type PdfUploadProps = {
     isFilled: boolean
     pdfName: string
     pdfFile: File | null
-    status: "idle" | "accepted" | "rejected"
+    status: "idle" | "uploading" | "accepted" | "rejected"
     setIdle: () => void
 }
 
 export default function PdfUpload({ getRootProps, getInputProps, active, isFilled, pdfName, pdfFile, status, setIdle }: PdfUploadProps) {
     const [preview, setPreview] = useState(false)
+    const [showModelModal, setShowModelModal] = useState(false)
 
     return (
         <>
@@ -72,13 +75,17 @@ export default function PdfUpload({ getRootProps, getInputProps, active, isFille
                         <p className={`text-lg flex-wrap ${active.icon}`}>File Name: {pdfName}</p>
                         <div className="flex justify-between gap-4 mt-3">
                             <Button size="lg" onClick={() => setPreview(true)} className={`bg-green-300 hover:bg-green-400 cursor-pointer text-lg`}>Preview PDF</Button>
-                            <Button size="lg" className={`bg-green-300 hover:bg-green-400 cursor-pointer text-lg`}>Chat with PDF</Button>
+                            <Button size="lg" onClick={() => setShowModelModal(true)} className={`bg-green-300 hover:bg-green-400 cursor-pointer text-lg`}>Chat with PDF</Button>
                         </div>
                         </CardContent>
                     </Card>
 
                     {preview && pdfFile && (
-                          <PdfPreviewModal pdfFile={pdfFile} pdfName={pdfName} onClose={() => setPreview(false)} />    
+                        <PdfPreviewModal pdfFile={pdfFile} pdfName={pdfName} onClose={() => setPreview(false)} />    
+                    )}
+
+                    {showModelModal && (
+                        <ModelModal onClose={() => setShowModelModal(false)}/>
                     )}
                 </>
             )}
@@ -96,6 +103,18 @@ export default function PdfUpload({ getRootProps, getInputProps, active, isFille
                     </CardContent>
                 </Card>
             )}
-            </>
+            {status == "uploading" &&
+                <Card className="w-full max-w-xl border-2 border-dashed border-yellow-300 bg-yellow-50/50 shadow-lg shadow-yellow-100 animate-in fade-in-0 duration-200">
+                    <CardContent className="flex flex-col items-center justify-center gap-5 py-14 text-center">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-yellow-100">
+                        <Spinner className="text-yellow-500 animate-spin" />
+                    </div>
+                    <div>
+                        <p className="text-xl font-semibold text-gray-800">Uploading…</p>
+                        <p className="mt-1 text-md text-gray-500">Sending your PDF to the server</p>
+                    </div>
+                    </CardContent>
+                </Card>
+            }</>
     )
 }
