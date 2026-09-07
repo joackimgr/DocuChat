@@ -16,10 +16,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Input } from '@/components/ui/input'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { PROVIDERS, type ProviderId, type Role } from './providers'
+import { AlertCircleIcon } from 'lucide-react';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle
+} from "@/components/ui/alert"
 
 export type ModelChoice = {
-  provider: "openai" | "ollama"
+  provider: ProviderId
   model: string
 }
 
@@ -33,16 +40,41 @@ type ModelModalProps = {
   onClose: () => void
 }
 
-const items = [
-  { label: "Ollama", value: "ollama"},
-  { label: "OpenAI", value: "openai"}
-]
 
 export default function ModelModal({ onClose }: ModelModalProps) {
   const [provider, setProvider] = useState<"openai" | 'ollama'>('ollama')
   const [model, setModel] = useState('')
   const [apiKey, setApiKey] = useState('')
+  const [ollamaModels, setOllamaModels] = useState<string[]>([])
 
+  const role: Role = 'llm'
+  const providerOptions = (Object.keys(PROVIDERS) as ProviderId[])
+    .filter(id => PROVIDERS[id].supports.includes(role))
+    .map(id => ({ value: id, label: PROVIDERS[id].label }))
+
+  const modelOptions = provider === "ollama"
+    ? ollamaModels
+    : PROVIDERS[provider].models[role]
+
+  const modelItems = modelOptions.map(model => <SelectItem value={model} key={model}>{model}</SelectItem>)
+
+  useEffect(() => {
+    async function loadModels() {
+      try {
+        const res = await fetch('/api/ollama/models')
+        if (!res.ok) {
+          const err = await res.json()
+          console.error(err.error)
+          return;
+        }
+        const data = await res.json()
+        setOllamaModels(data.models)
+      } catch (error){
+        console.error(error)
+      }
+    }
+    loadModels()
+  }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -52,7 +84,7 @@ export default function ModelModal({ onClose }: ModelModalProps) {
           <Button onClick={onClose} className="cursor-pointer">✕</Button>
         </CardHeader>  
         <CardContent className='flex flex-col items-center justify-center'>
-          <Select items={items} value={provider} onValueChange={(value) => {
+          <Select value={provider} onValueChange={(value) => {
             if (value) {
               setProvider(value)
               setModel('')
@@ -67,7 +99,7 @@ export default function ModelModal({ onClose }: ModelModalProps) {
             <SelectContent>
               <SelectGroup>
                 <SelectLabel>Provider</SelectLabel>
-                {items.map((item) => (
+                {providerOptions.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
                   </SelectItem>
@@ -87,24 +119,34 @@ export default function ModelModal({ onClose }: ModelModalProps) {
                 />
               </Field>
           )}
+          {modelOptions.length > 0 && (
           <Select value={model} onValueChange={(value) => {
-            if (value) {
-              setModel(value)
-            }
+          if (value) {
+            setModel(value)
+          }
           }}>
             <Field className='mt-5'>
               <FieldLabel>Model</FieldLabel>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select model" />
               </SelectTrigger>
             </Field>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value='fake-model2'>fake-model2</SelectItem>
-                <SelectItem value='fake-model3'>fake-model3</SelectItem>
+                {modelItems}
               </SelectGroup>
             </SelectContent>
           </Select>
+          )}
+          {modelOptions.length == 0 && (
+            <Alert variant='destructive' className='max-w-md mt-5'>
+              <AlertCircleIcon />
+              <AlertTitle>Models not found</AlertTitle>
+              <AlertDescription>
+                We couldn&apos;t find any models from {PROVIDERS[provider].label}. Make sure Ollama is running and you&apos;ve pulled at least one model (e.g. ollama pull llama3.2), then try again.
+              </AlertDescription>
+            </Alert>
+          )}
           <Button className='mt-5 cursor-pointer' disabled={!model}>Next</Button>
         </CardContent>     
       </Card>
