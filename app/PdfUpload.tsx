@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 import ModelModal from "./ModelModal"
+import { type ModelConfig } from './ModelModal'
 
 const PdfPreviewModal = dynamic(() => import('./PdfPreviewModal'), {
     ssr: false,
@@ -28,9 +29,10 @@ type PdfUploadProps = {
     pdfFile: File | null
     status: "idle" | "uploading" | "accepted" | "rejected"
     setIdle: () => void
+    onModelConfig: (config: ModelConfig) => void
 }
 
-export default function PdfUpload({ getRootProps, getInputProps, active, isFilled, pdfName, pdfFile, status, setIdle }: PdfUploadProps) {
+export default function PdfUpload({ getRootProps, getInputProps, active, isFilled, pdfName, pdfFile, status, setIdle, onModelConfig }: PdfUploadProps) {
     const [preview, setPreview] = useState(false)
     const [showModelModal, setShowModelModal] = useState(false)
 
@@ -85,7 +87,7 @@ export default function PdfUpload({ getRootProps, getInputProps, active, isFille
                     )}
 
                     {showModelModal && (
-                        <ModelModal onClose={() => setShowModelModal(false)}/>
+                        <ModelModal onSubmit={onModelConfig} onClose={() => setShowModelModal(false)}/>
                     )}
                 </>
             )}

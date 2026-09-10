@@ -1,18 +1,20 @@
 'use client'
 
 import { useState } from "react";
-import { FileRejection, useDropzone } from "react-dropzone";
+import { useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
+import { type ModelConfig } from "./ModelModal";
 
 export default function Home() {
   const [status, setStatus] = useState<"idle" | "uploading" | "accepted" | "rejected">("idle");
   const [pdfName, setPdfName] = useState('')
   const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [modelConfig, setModelConfig] = useState<ModelConfig | null>(null)
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
     maxFiles: 1,
-    onDrop: async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    onDrop: async (acceptedFiles: File[]) => {
       if (!acceptedFiles[0]) { setStatus("rejected"); return;}
       const fd = new FormData()
       fd.append('file', acceptedFiles[0])
@@ -68,6 +70,7 @@ export default function Home() {
           pdfFile={pdfFile}
           status={status}
           setIdle={setIdle}
+          onModelConfig={setModelConfig}
         />
     </section>
   );
