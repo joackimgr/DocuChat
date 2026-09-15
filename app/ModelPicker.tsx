@@ -1,6 +1,6 @@
 'use client'
 
-import { PROVIDERS, type ProviderId, type Role } from './providers'
+import { type OllamaModel, PROVIDERS, type ProviderId, type Role } from './providers'
 import { Field, FieldLabel } from '@/components/ui/field'
 import {
   Select,
@@ -31,7 +31,7 @@ type ModelPickerProps = {
     onChange: (choice: ModelChoice) => void
     apiKey: string
     onApiKeyChange: (key: string) => void
-    ollamaModels: string[]
+    ollamaModels: OllamaModel[]
 }
 
 export default function ModelPicker({ role, value, onChange, apiKey, onApiKeyChange, ollamaModels }: ModelPickerProps) {
@@ -39,8 +39,11 @@ export default function ModelPicker({ role, value, onChange, apiKey, onApiKeyCha
     .filter(id => PROVIDERS[id].supports.includes(role))
     .map(id => ({ value: id, label: PROVIDERS[id].label }))
 
+    const requiredCapability = role === "llm" ? "completion" : "embedding"
     const modelOptions = value.provider === "ollama"
         ? ollamaModels
+            .filter(model => model.capabilities.includes(requiredCapability))
+            .map(model => model.name)
         : PROVIDERS[value.provider].models[role]
 
     const modelItems = modelOptions.map(model => <SelectItem value={model} key={model}>{model}</SelectItem>)

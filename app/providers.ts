@@ -29,3 +29,8 @@ export const PROVIDERS: Record<ProviderId, ProviderInfo> = {
         },
     },
 }
+
+export type OllamaModel = {
+    name: string
+    capabilities: string[]
+}

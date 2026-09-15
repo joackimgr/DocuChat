@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardContent } from '@/components/ui/card'
 import { useState, useEffect } from 'react';
-import { type ProviderId, type Role } from './providers'
+import { type OllamaModel, type ProviderId, type Role } from './providers'
 import ModelPicker from './ModelPicker'
 
 export type ModelChoice = {
@@ -31,7 +31,7 @@ export default function ModelModal({ onClose, onSubmit }: ModelModalProps) {
   const [llm, setLlm] = useState<ModelChoice>({ provider: "ollama", model: "" })
   const [embedding, setEmbedding] = useState<ModelChoice>({ provider: "ollama", model: ""})
   const [apiKey, setApiKey] = useState('')
-  const [ollamaModels, setOllamaModels] = useState<string[]>([])
+  const [ollamaModels, setOllamaModels] = useState<OllamaModel[]>([])
 
   useEffect(() => {
     async function loadModels() {
