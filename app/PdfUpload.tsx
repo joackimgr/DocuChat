@@ -109,7 +109,7 @@ export default function PdfUpload({ getRootProps, getInputProps, active, isFille
                 <Card className="w-full max-w-xl border-2 border-dashed border-yellow-300 bg-yellow-50/50 shadow-lg shadow-yellow-100 animate-in fade-in-0 duration-200">
                     <CardContent className="flex flex-col items-center justify-center gap-5 py-14 text-center">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-yellow-100">
-                        <Spinner className="text-yellow-500 animate-spin" />
+                        <Spinner className="text-yellow-500 animate-spin size-4" />
                     </div>
                     <div>
                         <p className="text-xl font-semibold text-gray-800">Uploading…</p>

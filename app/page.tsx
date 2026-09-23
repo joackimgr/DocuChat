@@ -4,6 +4,44 @@ import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
 import { type ModelConfig } from "./ModelModal";
+import { pdfjs } from "react-pdf"
+
+pdfjs.GlobalWorkerOptions.workerSrc =
+  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+
+type ExtractedPage = {
+  pageNumber: number
+  text: string
+}
+
+async function extractPdfPages(
+  file: File
+): Promise<ExtractedPage[]> {
+  const buffer = await file.arrayBuffer()
+  const bytes = new Uint8Array(buffer)
+  const loadingTask = pdfjs.getDocument({
+    data: bytes
+  })
+  const pdf = await loadingTask.promise
+  const extractedPages: ExtractedPage[] = []
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+    const curPage = await pdf.getPage(pageNumber)
+    const curContent = await curPage.getTextContent()
+    const pageText = curContent.items.map((item) => {
+      if (!("str" in item)) return ""
+
+      return item.str + (item.hasEOL ? "\n" : " ")
+    })
+    .join("")
+    .trim()
+
+    extractedPages.push({
+      pageNumber,
+      text: pageText,
+    })
+  }
+  return extractedPages
+}
 
 export default function Home() {
   const [status, setStatus] = useState<"idle" | "uploading" | "accepted" | "rejected">("idle");
@@ -16,8 +54,11 @@ export default function Home() {
     maxFiles: 1,
     onDrop: async (acceptedFiles: File[]) => {
       if (!acceptedFiles[0]) { setStatus("rejected"); return;}
+
+      const file = acceptedFiles[0]
+
       const fd = new FormData()
-      fd.append('file', acceptedFiles[0])
+      fd.append('file', file)
       setStatus("uploading")
       try {
         const res = await fetch('/api/upload', { method: 'POST', body: fd})
@@ -29,8 +70,10 @@ export default function Home() {
           console.error(err.error)
           return;
         }
-        const data = await res.json()
-        console.log(data)
+        const extractedPages = await extractPdfPages(file)
+        console.log(extractedPages)
+        // const data = await res.json()
+        // console.log(data)
       } catch (e) {
           console.error(e)
           setStatus("rejected")
