@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
 import { type ModelConfig } from "./ModelModal";
-import { pdfjs } from "react-pdf"
-
-pdfjs.GlobalWorkerOptions.workerSrc =
-  `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
-
 type ExtractedPage = {
+  pageNumber: number
+  text: string
+}
+
+type PdfChunk = {
+  id: string
   pageNumber: number
   text: string
 }
@@ -17,6 +18,10 @@ type ExtractedPage = {
 async function extractPdfPages(
   file: File
 ): Promise<ExtractedPage[]> {
+  const { pdfjs } = await import("react-pdf")
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+
   const buffer = await file.arrayBuffer()
   const bytes = new Uint8Array(buffer)
   const loadingTask = pdfjs.getDocument({
@@ -41,6 +46,27 @@ async function extractPdfPages(
     })
   }
   return extractedPages
+}
+
+function chunkPdfPage(pages: ExtractedPage[]): PdfChunk[] {
+  const chunks: PdfChunk[] = []
+  const chunkSize = 500
+  const overlap = 100
+  const stepSize = chunkSize - overlap
+  for (const page of pages) {
+    const words = page.text.split(/\s+/)
+    for (let start = 0; start < words.length; start += stepSize) {
+      const chunkWords = words.slice(start, start + chunkSize)
+      const chunkText = chunkWords.join(' ')
+      const chunk: PdfChunk = {
+        id: `page-${page.pageNumber}-start-${start}`,
+        pageNumber: page.pageNumber,
+        text: chunkText,
+      }
+      chunks.push(chunk)
+    }
+  }
+  return chunks
 }
 
 export default function Home() {
@@ -71,9 +97,8 @@ export default function Home() {
           return;
         }
         const extractedPages = await extractPdfPages(file)
-        console.log(extractedPages)
-        // const data = await res.json()
-        // console.log(data)
+        const chunks = chunkPdfPage(extractedPages)
+        console.log(chunks)
       } catch (e) {
           console.error(e)
           setStatus("rejected")
