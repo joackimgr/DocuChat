@@ -1,3 +1,161 @@
+---
+lockfileVersion: '9.0'
+
+importers:
+
+  .:
+    configDependencies: {}
+    packageManagerDependencies:
+      pnpm:
+        specifier: 12.10.0
+        version: 12.10.0
+
+packages:
+
+  '@pnpm/exe.android-arm64@12.10.0':
+    resolution: {integrity: sha512-QMMRzOI/7CU4xLbKY6O2BZn3VI4+a8LLyim18H7it8llBWuBPMqDqUURE8045k+7lI8/lI2/tElhyKptEviKDQ==}
+    cpu: [arm64]
+    os: [android]
+
+  '@pnpm/exe.android-x64@12.10.0':
+    resolution: {integrity: sha512-41zwlROW+t523Nfqo4rWp8IPiSK5vnAWrnCey26Je45rX1SMNc4ABY7OFmPw41/t+Y0CE+4tjTj+0s9YGqPM5w==}
+    cpu: [x64]
+    os: [android]
+
+  '@pnpm/exe.darwin-arm64@12.10.0':
+    resolution: {integrity: sha512-L+r7AD8Fjf8Vcc4ZRJl+Pjzc27CIeQ/FiRwPmOluFO2UcXubmGHdW+OuMUxrU0vkoXiGR61Ft0RtaPwTRY4W/g==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@pnpm/exe.darwin-x64@12.10.0':
+    resolution: {integrity: sha512-/TCF1K6E+4PnbkLgqGS1Iqlf5bHp6FDzuXgu6++PMMAFkF7Yk5EF3BcfG1gYYjpkvlJBccvVMsRBnWFbSyqu1w==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@pnpm/exe.freebsd-x64@12.10.0':
+    resolution: {integrity: sha512-k7/WFA91E2qhnR/2EOEv402U8bjP758y2pybbdiB5Hrd4KhgviVOJp5cFrXpKgd8HZJs/RZN7cdmMvU2Q2BVgg==}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@pnpm/exe.linux-arm64-musl@12.10.0':
+    resolution: {integrity: sha512-ChD8bN0lRCRaL+CMOaMUgZQ4WHzEkDXmDHrZgXgdoo6yymQKKzr66Ic7Sl/D7Ky1cVUcFEzHjlq4fGDJwt6Lqg==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-arm64@12.10.0':
+    resolution: {integrity: sha512-egl5RUSQFh7kETBdmMhaTuaQKP1pjH6Cxq370zgpFFKJXF+GGkIzK+jLNazrjX9pKIWF3iqn7kUeyP6yKxzBoA==}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.linux-ppc64@12.10.0':
+    resolution: {integrity: sha512-YJ6bEZ+stPpv71CGfGQQeyIpMx/zSMEcAXQzG+rjBtzVfyNsxYciRevhJ+PE9b2qKqN78Mh/1tOMmx9ly4VXGw==}
+    cpu: [ppc64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.linux-riscv64@12.10.0':
+    resolution: {integrity: sha512-njfd4euctC1zH1nVBbm6+r1c+0y/TtgqN523rk/KMSxqItpV5QAVa9Yz48Rt5DOIKmuLq7xXOhsQodBlbTk3pw==}
+    cpu: [riscv64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.linux-s390x@12.10.0':
+    resolution: {integrity: sha512-4JI2F8pYGMcsG6ny61OiBSvZeDozc64TbPozbTU2X5uCsaFCsCvcpr/WwyypwCv+/mNjcIhaKhlxpwJYsnteIg==}
+    cpu: [s390x]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.linux-x64-musl@12.10.0':
+    resolution: {integrity: sha512-xayd2iG8ugdvjlGeOvsfm+iSe0bFu9RTX3/8HWOLAQmHdbLKi4hPbxP0S4c9tj8pNej/IxVBQLJksRXFlhNjPw==}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  '@pnpm/exe.linux-x64@12.10.0':
+    resolution: {integrity: sha512-PFkzWEghFLKuocxMHtn57mlJ59f5aBbqjX6FCUtiunEHqxTxOibSduQPs3Llm6VWbAXBjD3VrX29Z+bjU1Dpyw==}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  '@pnpm/exe.win32-arm64@12.10.0':
+    resolution: {integrity: sha512-0HtTS+TLONWd/dNSczyOkK0UeZ36cbdhC/2ljZ61DPhvc4jTb7ur0yU47On0in7Im3yXwzTY4vtF8ykrDwc+NQ==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@pnpm/exe.win32-x64@12.10.0':
+    resolution: {integrity: sha512-IcW3rehTGzJ7YnmHEWnbnJakjbBmnH0r29qiajK9+6b9psMF9IjocFr0dyitRVSfXxyW/FI5PIK3mOswGoyFTg==}
+    cpu: [x64]
+    os: [win32]
+
+  pnpm@12.10.0:
+    resolution: {integrity: sha512-Eip7bd+dQCaLwNsal4CJm5Xk+out/Ke9RQYVrYz3wmWfX1acIO18U4hrx7CNDVClT0rVBwaEf1aC7GxQSEFlOQ==}
+    engines: {node: '>=18.*'}
+    hasBin: true
+
+snapshots:
+
+  '@pnpm/exe.android-arm64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.android-x64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.darwin-arm64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.darwin-x64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.freebsd-x64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.linux-arm64-musl@12.10.0':
+    optional: true
+
+  '@pnpm/exe.linux-arm64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.linux-ppc64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.linux-riscv64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.linux-s390x@12.10.0':
+    optional: true
+
+  '@pnpm/exe.linux-x64-musl@12.10.0':
+    optional: true
+
+  '@pnpm/exe.linux-x64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.win32-arm64@12.10.0':
+    optional: true
+
+  '@pnpm/exe.win32-x64@12.10.0':
+    optional: true
+
+  pnpm@12.10.0:
+    optionalDependencies:
+      '@pnpm/exe.android-arm64': 12.10.0
+      '@pnpm/exe.android-x64': 12.10.0
+      '@pnpm/exe.darwin-arm64': 12.10.0
+      '@pnpm/exe.darwin-x64': 12.10.0
+      '@pnpm/exe.freebsd-x64': 12.10.0
+      '@pnpm/exe.linux-arm64': 12.10.0
+      '@pnpm/exe.linux-arm64-musl': 12.10.0
+      '@pnpm/exe.linux-ppc64': 12.10.0
+      '@pnpm/exe.linux-riscv64': 12.10.0
+      '@pnpm/exe.linux-s390x': 12.10.0
+      '@pnpm/exe.linux-x64': 12.10.0
+      '@pnpm/exe.linux-x64-musl': 12.10.0
+      '@pnpm/exe.win32-arm64': 12.10.0
+      '@pnpm/exe.win32-x64': 12.10.0
+
+---
 lockfileVersion: '9.0'
 
 settings:
@@ -8,6 +166,9 @@ importers:
 
   .:
     dependencies:
+      '@ai-sdk/openai':
+        specifier: ^4.0.84
+        version: 4.0.84(zod@4.4.3)
       '@base-ui/react':
         specifier: ^1.7.0
         version: 1.7.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -17,9 +178,6 @@ importers:
       ai:
         specifier: ^7.0.118
         version: 7.0.118(zod@4.4.3)
-      ai-sdk-ollama:
-        specifier: ^4.3.0
-        version: 4.3.0(ai@7.0.118(zod@4.4.3))(zod@4.4.3)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -38,6 +196,9 @@ importers:
       next:
         specifier: 16.3.3
         version: 16.3.3(@babel/core@7.29.7(supports-color@7.2.0))(@types/node@20.19.43)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      ollama-ai-provider-v2:
+        specifier: ^4.0.1
+        version: 4.0.1(ai@7.0.118(zod@4.4.3))(zod@4.4.3)
       pdfjs-dist:
         specifier: 5.4.296
         version: 5.4.296
@@ -96,14 +257,30 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
+  '@ai-sdk/openai@4.0.84':
+    resolution: {integrity: sha512-RsHz+jqstQ+wnMex1BLzIlwseDRzJAruT7ZW1X1azCEI9cVkSQVn17JS6qVntdi+DKkAMPg4rP1APixDEZFKiw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
   '@ai-sdk/provider-utils@5.0.49':
     resolution: {integrity: sha512-T+/H8DCvqJoCqLhltVatS7ffA779Iyk/ZZrgNXkrgv51E0n2Cd6eIdCmtwhCGIKqtbTtwCvTmQdAMv5Z8rOGHQ==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
+  '@ai-sdk/provider-utils@5.0.54':
+    resolution: {integrity: sha512-amqDxFnw9+dpVrDACRDGmExUUNOH9C1D2bhg/DqWJnamEOieDTXBBXLHujSby/0MqHdAFksnpE8Pzfqx6ABMBw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
+
   '@ai-sdk/provider@4.0.18':
     resolution: {integrity: sha512-+GZJIgz1jk86pwEbb3f1BD2bdoSKyWE4Jg4YUc7NMnMozbWemSKYZcw2F4nMaO5qwsL5A8RmioAKW81YktRpIQ==}
+    engines: {node: '>=22'}
+
+  '@ai-sdk/provider@4.0.22':
+    resolution: {integrity: sha512-1Jtmn36VNMOBo9CMUQrPqsR744qtqRloEiXpWCYS8ffPlhS2CrSNmoho5lPjp3R7EnkzBsGI6p51TA7fQJQZdA==}
     engines: {node: '>=22'}
 
   '@alloc/quick-lru@5.2.0':
@@ -1111,12 +1288,6 @@ packages:
     resolution: {integrity: sha512-lGq+9yr1/GuAWaVYIHRjvvySG5/4VfKIvC8EWxStPdcDh/Ka7FG3twP6v4d5BkravUilhIAsG4Qj83t02LWUPQ==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  ai-sdk-ollama@4.3.0:
-    resolution: {integrity: sha512-3rvaWZJvprmt707WnbkeEvMJc6XZHwfgXbF73g8fQhn4spGWOdeASnFd/xH9hmrdml7oTtZLFqzk6Fvkr/q8Ig==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      ai: ^7.0.95
 
   ai@7.0.118:
     resolution: {integrity: sha512-ZjkbbOffH09yQAjeZ5yGXd8ePTQlFIyKH5aW0s0LOMmvaR1TSoeg5wVURwLvFry/IzzaLndmw9glTKwWRoog3Q==}
@@ -2294,10 +2465,6 @@ packages:
   jsonfile@6.2.1:
     resolution: {integrity: sha512-zwOTdL3rFQ/lRdBnntKVOX6k5cKJwEc1HdilT71BWEu7J41gXIB2MRp+vxduPSwZJPWBxEzv4yH1wYLJGUHX4Q==}
 
-  jsonrepair@3.15.0:
-    resolution: {integrity: sha512-wy8OTjwsJwQRnQJkKnMJJ9vcytRdBPAgIF/Hy6+s1dAj42BHMKiyL8JzEieIl3JY7idt8eyHwBWTO8mh/+mtwA==}
-    hasBin: true
-
   jsx-ast-utils@3.3.5:
     resolution: {integrity: sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ==}
     engines: {node: '>=4.0'}
@@ -2617,8 +2784,12 @@ packages:
     resolution: {integrity: sha512-gXah6aZrcUxjWg2zR2MwouP2eHlCBzdV4pygudehaKXSGW4v2AsRQUK+lwwXhii6KFZcunEnmSUoYp5CXibxtA==}
     engines: {node: '>= 0.4'}
 
-  ollama@0.6.3:
-    resolution: {integrity: sha512-KEWEhIqE5wtfzEIZbDCLH51VFZ6Z3ZSa6sIOg/E/tBV8S51flyqBOXi+bRxlOYKDf8i327zG9eSTb8IJxvm3Zg==}
+  ollama-ai-provider-v2@4.0.1:
+    resolution: {integrity: sha512-JHw/Knt4kOTSwQ0oqorbdgzukK6iE73U3MPUyOuCEBpAQGAzm80CQDwyaXMwF80yFjY21RY9qfzkoLyPFFts/w==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      ai: ^7.0.0
+      zod: ^4.0.16
 
   on-finished@2.4.1:
     resolution: {integrity: sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==}
@@ -3267,9 +3438,6 @@ packages:
   warning@4.0.3:
     resolution: {integrity: sha512-rpJyN222KWIvHJ/F53XSZv0Zl/accqHR8et1kpaMTD/fLCRxtV8iX8czMzY7sVZupTI3zcUTg8eycS2kNF9l6w==}
 
-  whatwg-fetch@3.6.20:
-    resolution: {integrity: sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==}
-
   which-boxed-primitive@1.1.1:
     resolution: {integrity: sha512-TbX3mj8n0odCBFVlY8AxkqcHASw3L60jIuF8jFP78az3C2YhmGvqbHBpAjTRH2/xqYunrJ9g1jSyjCjpoWzIAA==}
     engines: {node: '>= 0.4'}
@@ -3351,6 +3519,12 @@ snapshots:
       '@vercel/oidc': 3.2.0
       zod: 4.4.3
 
+  '@ai-sdk/openai@4.0.84(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.22
+      '@ai-sdk/provider-utils': 5.0.54(zod@4.4.3)
+      zod: 4.4.3
+
   '@ai-sdk/provider-utils@5.0.49(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.18
@@ -3360,7 +3534,20 @@ snapshots:
       undici: 7.29.0
       zod: 4.4.3
 
+  '@ai-sdk/provider-utils@5.0.54(zod@4.4.3)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.22
+      '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
+      eventsource-parser: 3.1.1
+      undici: 7.29.0
+      zod: 4.4.3
+
   '@ai-sdk/provider@4.0.18':
+    dependencies:
+      json-schema: 0.4.0
+
+  '@ai-sdk/provider@4.0.22':
     dependencies:
       json-schema: 0.4.0
 
@@ -4348,16 +4535,6 @@ snapshots:
       acorn: 8.18.0
 
   acorn@8.18.0: {}
-
-  ai-sdk-ollama@4.3.0(ai@7.0.118(zod@4.4.3))(zod@4.4.3):
-    dependencies:
-      '@ai-sdk/provider': 4.0.18
-      '@ai-sdk/provider-utils': 5.0.49(zod@4.4.3)
-      ai: 7.0.118(zod@4.4.3)
-      jsonrepair: 3.15.0
-      ollama: 0.6.3
-    transitivePeerDependencies:
-      - zod
 
   ai@7.0.118(zod@4.4.3):
     dependencies:
@@ -5670,8 +5847,6 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
-  jsonrepair@3.15.0: {}
-
   jsx-ast-utils@3.3.5:
     dependencies:
       array-includes: 3.1.9
@@ -5950,9 +6125,12 @@ snapshots:
       define-properties: 1.2.1
       es-object-atoms: 1.1.2
 
-  ollama@0.6.3:
+  ollama-ai-provider-v2@4.0.1(ai@7.0.118(zod@4.4.3))(zod@4.4.3):
     dependencies:
-      whatwg-fetch: 3.6.20
+      '@ai-sdk/provider': 4.0.18
+      '@ai-sdk/provider-utils': 5.0.49(zod@4.4.3)
+      ai: 7.0.118(zod@4.4.3)
+      zod: 4.4.3
 
   on-finished@2.4.1:
     dependencies:
@@ -6755,8 +6933,6 @@ snapshots:
   warning@4.0.3:
     dependencies:
       loose-envify: 1.4.0
-
-  whatwg-fetch@3.6.20: {}
 
   which-boxed-primitive@1.1.1:
     dependencies:

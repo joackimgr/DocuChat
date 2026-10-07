@@ -74,6 +74,7 @@ export default function Home() {
   const [pdfName, setPdfName] = useState('')
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [modelConfig, setModelConfig] = useState<ModelConfig | null>(null)
+  const [pdfChunks, setPdfChunks] = useState<PdfChunk[]>([])
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
@@ -98,6 +99,7 @@ export default function Home() {
         }
         const extractedPages = await extractPdfPages(file)
         const chunks = chunkPdfPage(extractedPages)
+        setPdfChunks(chunks)
         console.log(chunks)
       } catch (e) {
           console.error(e)
@@ -115,6 +117,38 @@ export default function Home() {
     setStatus('idle')
     setPdfFile(null)
     setPdfName('')
+  }
+
+  async function handleModelConfig(config: ModelConfig) {
+    setModelConfig(config)
+    const texts = pdfChunks.map(chunk => chunk.text)
+    console.log(config.embedding)
+    console.log(texts)
+    try{
+      const rs = await fetch('/api/embeddings', { 
+        method: 'POST', 
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ 
+          texts, 
+          embedding: config.embedding,
+          apiKey: config.apiKey
+        })})
+      
+        const data = await rs.json()
+
+      if (!rs.ok) {
+        console.error(data.error)
+        return
+      }
+
+      console.log("Chunks sent:", texts.length)
+      console.log("Embeddings received:", data.embeddings.length)
+      console.log("Numbers per embedding:", data.embeddings[0]?.length)
+    } catch (error) {
+      console.error("Embedding request failed:", error)
+    }
   }
 
   const styles = {
@@ -138,7 +172,7 @@ export default function Home() {
           pdfFile={pdfFile}
           status={status}
           setIdle={setIdle}
-          onModelConfig={setModelConfig}
+          onModelConfig={handleModelConfig}
         />
     </section>
   );
