@@ -122,30 +122,34 @@ export default function Home() {
   async function handleModelConfig(config: ModelConfig) {
     setModelConfig(config)
     const texts = pdfChunks.map(chunk => chunk.text)
-    console.log(config.embedding)
-    console.log(texts)
-    try{
-      const rs = await fetch('/api/embeddings', { 
-        method: 'POST', 
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ 
-          texts, 
-          embedding: config.embedding,
-          apiKey: config.apiKey
-        })})
-      
+    const BATCH = 100
+    const allEmbeddings: number[][] = []
+
+    try {
+      for (let i = 0; i < texts.length; i += BATCH) {
+        const batch = texts.slice(i, i + BATCH)
+
+        const rs = await fetch('/api/embeddings', {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            texts: batch
+          })
+        })
+
         const data = await rs.json()
 
-      if (!rs.ok) {
-        console.error(data.error)
-        return
+        if (!rs.ok) {
+          console.error(data.error)
+          return
+        }
+
+        allEmbeddings.push(...data.embeddings)
       }
 
-      console.log("Chunks sent:", texts.length)
-      console.log("Embeddings received:", data.embeddings.length)
-      console.log("Numbers per embedding:", data.embeddings[0]?.length)
+      console.log("Chunks:", texts.length, "Vectors:", allEmbeddings.length)
     } catch (error) {
       console.error("Embedding request failed:", error)
     }
