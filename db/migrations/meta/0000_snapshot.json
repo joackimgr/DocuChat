@@ -1,5 +1,5 @@
 {
-  "id": "766bfa2b-1770-454a-9b0f-eba1a744fce1",
+  "id": "7b203502-8c55-43c9-aa18-b149a2c4ebb3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -51,7 +51,7 @@
         },
         "embedding": {
           "name": "embedding",
-          "type": "vector(768)",
+          "type": "vector(1024)",
           "primaryKey": false,
           "notNull": true
         }

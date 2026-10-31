@@ -4,7 +4,7 @@ CREATE TABLE "chunks" (
 	"doc_name" text NOT NULL,
 	"page" integer NOT NULL,
 	"text" text NOT NULL,
-	"embedding" vector(768) NOT NULL
+	"embedding" vector(1024) NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "conversations" (

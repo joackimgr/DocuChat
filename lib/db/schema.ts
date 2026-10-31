@@ -6,7 +6,7 @@ export const chunksTable = pgTable("chunks", {
     doc_name: text('doc_name').notNull(),
     page: integer('page').notNull(),
     text: text('text').notNull(),
-    embedding: vector('embedding', { dimensions: 768 }).notNull()
+    embedding: vector('embedding', { dimensions: 1024 }).notNull()
 }, (t) => {
     return [index('chunks_embedding_idx').using('hnsw', t.embedding.op(
         'vector_cosine_ops'
