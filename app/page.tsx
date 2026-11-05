@@ -75,6 +75,7 @@ export default function Home() {
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [modelConfig, setModelConfig] = useState<ModelConfig | null>(null)
   const [pdfChunks, setPdfChunks] = useState<PdfChunk[]>([])
+  const [docId, setDocId] = useState<string>()
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
@@ -100,6 +101,7 @@ export default function Home() {
         const extractedPages = await extractPdfPages(file)
         const chunks = chunkPdfPage(extractedPages)
         setPdfChunks(chunks)
+        setDocId(crypto.randomUUID())
         console.log(chunks)
       } catch (e) {
           console.error(e)
@@ -117,17 +119,23 @@ export default function Home() {
     setStatus('idle')
     setPdfFile(null)
     setPdfName('')
+    setDocId(undefined)
   }
 
   async function handleModelConfig(config: ModelConfig) {
     setModelConfig(config)
-    const texts = pdfChunks.map(chunk => chunk.text)
+    const chunks = pdfChunks.map(chunk => ({ text: chunk.text, page: chunk.pageNumber }))
     const BATCH = 100
-    const allEmbeddings: number[][] = []
+    let inserted = 0
+
+    if (chunks.length === 0) {
+      console.warn("No chunks to save — the PDF produced no text.")
+      return
+    }
 
     try {
-      for (let i = 0; i < texts.length; i += BATCH) {
-        const batch = texts.slice(i, i + BATCH)
+      for (let i = 0; i < chunks.length; i += BATCH) {
+        const batch = chunks.slice(i, i + BATCH)
 
         const rs = await fetch('/api/embeddings', {
           method: 'POST',
@@ -135,7 +143,9 @@ export default function Home() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            texts: batch
+            docId,
+            docName: pdfName,
+            chunks: batch
           })
         })
 
@@ -146,10 +156,10 @@ export default function Home() {
           return
         }
 
-        allEmbeddings.push(...data.embeddings)
+        inserted += data.inserted
       }
 
-      console.log("Chunks:", texts.length, "Vectors:", allEmbeddings.length)
+      console.log("Chunks:", chunks.length, "Saved:", inserted)
     } catch (error) {
       console.error("Embedding request failed:", error)
     }
