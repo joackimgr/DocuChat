@@ -12,7 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 At the start of every session, read "Current status" and "Next move" below, restate the next milestone in one sentence, and ask for the plan. Do not start coding.
 
-A learning project for chatting with an uploaded PDF using retrieval-augmented generation (RAG). A single self-hosted instance per user: the user picks the chat model (OpenAI or a local Ollama model), while the embedding model is fixed server-side to `bge-m3`.
+A learning project for chatting with an uploaded PDF using retrieval-augmented generation (RAG). A single self-hosted instance per user, running entirely against a local Ollama server: the user picks the chat model from the installed Ollama models, while the embedding model is fixed to `bge-m3`. There is no cloud provider integration.
 
 ## Collaboration: mentor / tutor
 
@@ -42,12 +42,15 @@ Implemented in code (not a claim of runtime verification):
 - Client-side PDF text extraction with page numbers (`extractPdfPages` in `page.tsx`), run after a successful upload.
 - Word-based chunking of each page's text (500-word chunks, 100-word overlap) into `pdfChunks`.
 - PDF preview using `react-pdf`, with previous/next page controls.
-- A single-step modal for choosing the chat provider/model and entering an OpenAI API key.
+- A single-step modal for choosing the chat model from the installed Ollama models.
 - An API route listing models from a locally running Ollama instance, including each model's capabilities.
-- Embedding generation through `POST /api/embeddings`, pinned to `bge-m3` (1024 dimensions), requested in batches of 100.
-- A Postgres 17 + pgvector database defined with Drizzle: `chunks` (text, page, 1024-dim embedding, HNSW index) and `conversations` (query/response history).
+- Indexing through `POST /api/embeddings`: takes `{ docId, docName, chunks }`, embeds with `bge-m3` (1024 dims) and inserts one row per chunk with its page number. Batched 20 chunks per request.
+- Retrieval in `lib/retrieval.ts` (`findRelevantChunks`), exposed as `POST /api/search`.
+- Answering in `POST /api/chat`: retrieves 5 chunks, builds a system prompt with page-tagged excerpts, streams with the chosen Ollama model through `useChat`.
+- A dedicated `/chat` page with a transcript, a typing indicator, send/stop controls, Markdown rendering of answers, and a model switcher ("Answering with …") that changes the chat model per question.
+- A Postgres 17 + pgvector database defined with Drizzle: `chunks` (text, page, 1024-dim embedding, HNSW index) and `conversations` (empty, unused).
 
-Not implemented: writing chunks or embeddings to the database, retrieval, chat UI, or model inference. Chunk embeddings are returned to the browser and only logged, and the submitted chat model (`llm`) is not consumed yet.
+Not implemented: writing to `conversations`, session history across reloads, README, and deployment notes.
 
 Decisions that are settled and should not be reopened without a reason:
 
@@ -57,10 +60,10 @@ Decisions that are settled and should not be reopened without a reason:
 
 ## Next move
 
-- Milestone: persist chunks and embeddings — Drizzle client (`lib/db/index.ts`), then an indexing route that inserts into `chunks`.
-- Blocked on: nothing. The embedding model is settled (`bge-m3`, 1024).
-- First command: `docker compose up -d` (the database is already migrated to `vector(1024)`).
-- Verify with: `docker compose exec db psql -U docuchat -d docuchat -c 'select count(*), min(page), max(page) from chunks;'` — must show one row per chunk with real page numbers.
+- Milestone: persist conversations — write one `conversations` row per exchange (`session_id`, `doc_id`, `query`, `response`) and load past messages on `/chat`.
+- Blocked on: where `session_id` comes from (generate on the chat page and keep it in the URL).
+- First command: `docker compose up -d && pnpm dev`.
+- Verify with: `docker compose exec db psql -U docuchat -d docuchat -c 'select session_id, left(query, 40), created_at from conversations order by id desc limit 3;'`
 
 Update this section before ending a session.
 
@@ -77,7 +80,8 @@ Versions below are declared in `package.json`; consult the lockfile for resolved
 | Icons | `lucide-react` |
 | File upload | `react-dropzone` ^20.1.1 |
 | PDF preview/parsing | `react-pdf` ^10.5.0, `pdfjs-dist` 5.4.296 |
-| RAG / model access | AI SDK (`ai` ^7, `embedMany`), `ollama-ai-provider-v2` (chat + `bge-m3` embeddings); `@ai-sdk/openai` installed but unused |
+| RAG / model access | AI SDK (`ai` ^7, `embedMany`, `streamText`), `@ai-sdk/react` (`useChat`), `ollama-ai-provider-v2` (chat + `bge-m3` embeddings) |
+| Answer rendering | `react-markdown` ^10, `remark-gfm` (lists, tables, emphasis) |
 | Database | Postgres 17 with pgvector (`pgvector/pgvector:pg17`), `drizzle-orm` ^0.45, `drizzle-kit` ^0.31, `pg` ^8 |
 | Config | `dotenv` (loaded by `drizzle.config.ts`); one `.env` shared by Compose and Next |
 | Installed but unused | `@react-pdf/renderer` (generates PDFs; not the preview implementation), `motion` |
@@ -108,18 +112,24 @@ app/
   page.tsx                   # upload state, retained File, extraction/chunking helpers, batched embeddings
   PdfUpload.tsx              # upload status views and modal visibility
   PdfPreviewModal.tsx        # react-pdf preview and page navigation
-  providers.ts               # provider types and static OpenAI chat model list
-  ModelPicker.tsx            # provider/model/API-key controls for one role
-  ModelModal.tsx             # single-step chat-model modal; loads Ollama models
+  ChatPanel.tsx              # useChat transcript, Markdown answers, model switcher, send/stop
+  chat/page.tsx              # chat page; reads docId, name and model from the URL
+  providers.ts               # Ollama model type and the fixed embedding model name
+  ModelPicker.tsx            # single Model select, filtered to completion models
+  ModelModal.tsx             # chat-model modal with indexing progress
   api/upload/route.ts        # validates multipart file, returns { got: file.name }
   api/ollama/models/route.ts # proxies Ollama model listing, with capabilities
-  api/embeddings/route.ts    # embeds texts with the pinned bge-m3 model
+  api/embeddings/route.ts    # embeds a batch of chunks and inserts them
+  api/search/route.ts        # returns the closest chunks for a question
+  api/chat/route.ts          # retrieves, prompts and streams the answer
   globals.css                # Tailwind imports and theme tokens
 components/ui/               # shared UI primitives
 db/
   migrations/                # drizzle-kit SQL: 0000_<name>.sql + meta/ snapshots
 lib/
   utils.ts                   # class-name utility
+  retrieval.ts               # findRelevantChunks: embed question, order by cosine distance
+  db/index.ts                # Drizzle client, cached on globalThis
   db/schema.ts               # Drizzle tables: chunks, conversations
 docker-compose.yml           # Postgres + pgvector for local/self-hosted use
 drizzle.config.ts            # drizzle-kit config; reads DATABASE_URL via dotenv
@@ -133,13 +143,14 @@ public/
 - Dropzone accepts PDFs and sets `maxFiles: 1`. Its callback guards `acceptedFiles[0]`, posts the file as multipart `FormData` under `file`, then extracts and chunks text before retaining it.
 - `extractPdfPages` dynamically imports `react-pdf`, sets the shared `pdfjs` worker to an unpkg URL matching `pdfjs.version`, reads the `File` as bytes, and returns one `{ pageNumber, text }` per page. Text runs are joined, turning `hasEOL` into newlines.
 - `chunkPdfPage` splits each page's text on whitespace into 500-word chunks with a 100-word step (400-word advance), tagged with a `page-<n>-start-<i>` id. Chunks never cross page boundaries.
-- `handleModelConfig` maps `pdfChunks` to texts and posts them to `/api/embeddings` in sequential batches of 100, appending each batch's vectors in order. It only logs the totals; nothing is persisted.
-- `PdfUpload` receives upload state and callbacks as typed props. It owns preview/model-modal visibility. "Chat with PDF" currently opens configuration, not a chat session.
+- `handleModelConfig` sends `pdfChunks` to `/api/embeddings` in sequential batches of 20, reports progress to the modal, then navigates to `/chat?docId=…&name=…&model=…`. It throws on failure so the modal can show an error instead of closing silently.
+- `PdfUpload` receives upload state and callbacks as typed props. It owns preview/model-modal visibility; pressing "Chat with PDF" opens the model modal, and Finish indexes the document and navigates to `/chat`.
 - A status-keyed `styles` map controls border/icon classes. Dragging selects accepted styles; `isFilled` is derived from dragging or accepted status.
 - `PdfPreviewModal` is dynamically imported with `ssr: false`. It uses `Document` and `Page` from `react-pdf`; its PDF.js worker currently loads from an unpkg URL matching `pdfjs.version`.
-- `ModelModal` collects one `llm` choice and an `apiKey` string. Submission passes the configuration to the page and closes the modal. Credentials live in React state.
-- `ModelPicker` filters Ollama models by the capability each role needs (`completion` for chat) and shows a destructive alert when none match. It still accepts a `role` prop, but only `"llm"` is used.
-- `providers.ts` defines `ProviderId` (`openai` / `ollama`) and `Role` (`llm` / `embedding`). OpenAI chat models are hardcoded; Ollama model names are loaded through `/api/ollama/models`. The `embedding` role and the OpenAI embedding lists are dead code kept for a future feature.
+- `ModelModal` collects one Ollama model name. While indexing it shows a percentage bar driven by the `onProgress` callback, and it stays open if the request fails.
+- `ChatPanel` keeps its own `model` state, seeded from the URL. The transport has no body; each `sendMessage({ text }, { body: { docId, model } })` carries the current model, so switching applies to the next question while the transcript is preserved. The model list is fetched client-side from `/api/ollama/models` and filtered to `completion`.
+- `ModelPicker` lists Ollama models with the `completion` capability, shows "Loading models…" until `/api/ollama/models` settles, and only then shows the destructive "No models found" alert.
+- `providers.ts` keeps only `OllamaModel`, `Role`, and `EMBEDDING_MODEL` (`bge-m3`). Chat model names come from `/api/ollama/models`; nothing is hardcoded.
 - Class names come from two `cn` helpers: shadcn primitives import `cn` from the `cn` package, while `card`, `button`, and `layout` import it from `@/lib/utils` (which wraps `clsx` + `tailwind-merge`).
 - Client components use `'use client'`; component props have named types. Import local components without file extensions. `@/*` resolves from the project root.
 - Icons use `currentColor` and Tailwind `text-*` classes. Tailwind v4 uses `bg-linear-to-br`; use `min-h-screen` for viewport-height layouts.
@@ -161,11 +172,14 @@ public/
 - `POST /api/upload` returns 400 if `file` is not a `File`, 415 if its MIME type is not `application/pdf`, and 413 above 100 MiB. Success returns only the filename. MIME checking does not validate PDF contents.
 - The UI currently labels every upload rejection as an unsupported file type, including network/server failures. A failed extraction or embedding call is also surfaced as a rejection.
 - `GET /api/ollama/models` requests `http://localhost:11434/api/tags`, then calls `http://localhost:11434/api/show` per model, and returns `{ models: { name, capabilities }[] }`; it returns 502 if Ollama is unreachable.
-- `POST /api/embeddings` takes `{ texts }` and returns `{ embeddings }` from `embedMany`, using `bge-m3` via the local Ollama server. It rejects with 400 when `texts` is not an array, is empty, contains a non-string or blank entry, or holds more than 100 items. It returns 500 if the returned vectors are not 1024 dimensions, and 500 on provider failure.
+- `POST /api/embeddings` takes `{ docId, docName, chunks: [{ page, text }] }`, embeds with `bge-m3` and inserts the rows. It returns `{ inserted }`. Rejects with 400 on a non-array or empty `chunks`, a non-numeric `page`, a blank `text`, or more than 100 chunks. Returns 500 if vectors are not 1024 dims, and 500 on provider or insert failure.
+- `POST /api/search` takes `{ question, docId }` and returns `{ results: [{ text, page, similarity }] }`, highest similarity first, limit 5. `similarity` is `1 - cosineDistance`, so it is not a 0–1 confidence score.
+- `POST /api/chat` takes `{ messages, docId, model }`, retrieves 5 chunks for the last user message, and streams a UI message response. Returns 404 when the document has no chunks, 400 on bad input, 500 on failure.
 - Ollama's `localhost` refers to the machine running the Next.js server. Accessing a user's local Ollama from a hosted deployment is an unresolved architecture decision.
-- The chat model picker filters the Ollama list by `completion` client-side. OpenAI API-key presence is not required by the modal's button validation, and the Finish button is not disabled when no model is selected.
+- The chat model picker filters the Ollama list by `completion` client-side and shows "Loading models…" until the request settles. The Finish button stays disabled until a model is selected.
 - Text extraction runs client-side in `page.tsx`, so the PDF is parsed in the browser rather than by the upload route.
-- Embeddings are batched 100 texts per request, in order, and returned to the browser; nothing is written to Postgres yet, and the mapping from a vector back to its `pageNumber` is discarded.
+- Indexing runs from the browser, so the tab must stay open until it finishes. Measured on this machine: ~0.26 s per 500-word chunk, so 600 chunks ≈ 2.5 minutes.
+- `conversations` is never written; the transcript lives only in `useChat` state and is lost on reload.
 - Drag-time acceptance is optimistic; final drop validation may reject a file that appeared accepted while dragging.
 
 ## Planned work
@@ -176,23 +190,21 @@ Done:
 
 1. Extract PDF text with page numbers — client-side via PDF.js, in `page.tsx`.
 2. Chunk per page — 500-word chunks, 100-word overlap.
-3. Generate embeddings — `POST /api/embeddings`, pinned to `bge-m3` (1024), batched by 100.
+3. Generate embeddings — `POST /api/embeddings`, pinned to `bge-m3` (1024), batched by 20.
 4. Database schema and migrations — `chunks` and `conversations` with pgvector.
+5. Persist chunks and embeddings — `lib/db/index.ts`, inserts in the embeddings route.
+6. Retrieve top-k chunks — `lib/retrieval.ts`, `POST /api/search`.
+7. Grounded answers with page references — `POST /api/chat`, `streamText`.
+8. Chat UI — `/chat` with `useChat`, typing indicator, send/stop.
 
 In progress:
 
-5. Persist chunks and embeddings — `lib/db/index.ts`, an indexing route, and writes to `chunks`.
+9. Conversation history — write `conversations` rows and reload them on `/chat`.
 
 Open decisions:
 
-- Where embedding happens for storage: the existing `/api/embeddings` route can embed and insert, or the browser can post vectors. Server-side keeps the vectors off the wire twice.
 - Session identity: how `session_id` is generated and reused across a chat.
-- API-key handling: currently sent in the request body per call and held in React state. Single-tenant installs could read it from the server environment instead.
-- Retrieval parameters: `top-k` and a similarity cutoff (remember `<=>` returns distance, so lower is closer).
-
-Remaining milestones:
-
-6. Retrieve top-k chunks for a question, then generate a grounded answer with page references.
-7. Chat UI and conversation history, reading `conversations`.
+- Retrieval parameters: `top-k` (currently 5) and a similarity cutoff. Careful: `<=>` returns distance, so lower is closer, and measured similarity on a real Greek PDF topped out at ~0.49 — a 0.5 cutoff would return nothing.
+- Indexing location: it runs in the browser today, so a large PDF keeps the tab busy. A server-side job is the upgrade.
 
 Next.js App Router route handlers are the intended backend. Read the relevant installed Next.js documentation before writing Next-specific code, as required by the auto-managed block above. Preserve that block when editing this guide.
