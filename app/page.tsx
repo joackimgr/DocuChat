@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
@@ -76,8 +76,30 @@ export default function Home() {
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [pdfChunks, setPdfChunks] = useState<PdfChunk[]>([])
   const [docId, setDocId] = useState<string>()
+  const [storedDocument, setStoredDocument] = useState<{ docId: string, docName: string, passages: number } | null>(null)
 
   const router = useRouter()
+
+  useEffect(() => {
+    async function loadStoredDocument() {
+      try {
+        const res = await fetch('/api/documents')
+        if (!res.ok) return
+        const data = await res.json()
+        const first = data.documents?.[0]
+        if (first) {
+          setStoredDocument({
+            docId: first.docId,
+            docName: first.docName,
+            passages: Number(first.passages),
+          })
+        }
+      } catch (error) {
+        console.error('Could not check for a stored document', error)
+      }
+    }
+    loadStoredDocument()
+  }, [])
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
@@ -135,6 +157,16 @@ export default function Home() {
 
     onProgress?.(0, chunks.length)
 
+    if (!docId) {
+      throw new Error("No document id — cannot prepare the document.")
+    }
+
+    await fetch('/api/documents', {
+      method: 'POST',
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ keepDocId: docId })
+    })
+
     try {
       for (let i = 0; i < chunks.length; i += BATCH) {
         const batch = chunks.slice(i, i + BATCH)
@@ -163,10 +195,6 @@ export default function Home() {
 
       console.log("Chunks:", chunks.length, "Saved:", inserted)
 
-      if (!docId) {
-        throw new Error("No document id — cannot open the chat page.")
-      }
-
       const params = new URLSearchParams({
         docId,
         name: pdfName,
@@ -191,7 +219,23 @@ export default function Home() {
   const isFilled = isDragActive || status == "accepted";
 
   return (
-    <section className="flex justify-center items-center min-h-screen">
+    <section className="flex flex-col justify-center items-center min-h-screen gap-6">
+        {storedDocument && status === "idle" && (
+          <div className="w-full max-w-xl rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-gray-700">
+            <p>
+              <span className="font-medium">{storedDocument.docName}</span> is still stored
+              ({storedDocument.passages} passages).
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push(`/chat?docId=${storedDocument.docId}&name=${encodeURIComponent(storedDocument.docName)}`)}
+              className="mt-2 cursor-pointer font-medium text-green-800 underline underline-offset-4 hover:text-green-900"
+            >
+              Continue chatting with it
+            </button>
+          </div>
+        )}
+
         <PdfUpload 
           getRootProps={getRootProps}
           getInputProps={getInputProps}

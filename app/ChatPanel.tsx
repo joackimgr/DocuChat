@@ -41,6 +41,7 @@ export default function ChatPanel({ docId, modelConfig }: ChatPanelProps) {
                     .filter((entry) => entry.capabilities.includes('completion'))
                     .map((entry) => entry.name)
                 setModels(names)
+                setModel((current) => current || names[0] || '')
             } catch (error) {
                 console.error('Could not load models', error)
             }
@@ -57,7 +58,7 @@ export default function ChatPanel({ docId, modelConfig }: ChatPanelProps) {
 
     function handleSubmit(event: React.FormEvent) {
         event.preventDefault()
-        if (!input.trim() || isBusy) return
+        if (!input.trim() || isBusy || !model) return
         sendMessage({ text: input }, { body: { docId, model } })
         setInput('')
     }
@@ -146,7 +147,7 @@ export default function ChatPanel({ docId, modelConfig }: ChatPanelProps) {
                         Stop
                     </Button>
                 ) : (
-                    <Button type="submit" disabled={!input.trim()}>
+                    <Button type="submit" disabled={!input.trim() || !model}>
                         Send
                     </Button>
                 )}

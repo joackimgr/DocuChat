@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { FileText } from 'lucide-react'
 import ChatPanel from '../ChatPanel'
+import NewPdfLink from '../NewPdfLink'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -15,7 +16,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
     const name = typeof params.name === 'string' ? params.name : 'document'
     const model = typeof params.model === 'string' ? params.model : ''
 
-    if (!UUID.test(docId) || !model) {
+    if (!UUID.test(docId)) {
         return (
             <main className="flex min-h-screen items-center justify-center p-6">
                 <p className="text-gray-600">
@@ -38,12 +39,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
                         <h1 className="truncate font-semibold">{name}</h1>
                     </div>
                 </div>
-                <Link
-                    href="/"
-                    className="inline-flex shrink-0 items-center rounded-md border border-green-400 bg-green-100 px-3 py-1.5 text-sm font-medium text-gray-800 transition-colors hover:bg-green-200 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 focus-visible:outline-none"
-                >
-                    New PDF
-                </Link>
+                <NewPdfLink docId={docId} />
             </header>
 
             <ChatPanel
