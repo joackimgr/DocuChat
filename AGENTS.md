@@ -48,9 +48,10 @@ Implemented in code (not a claim of runtime verification):
 - Retrieval in `lib/retrieval.ts` (`findRelevantChunks`), exposed as `POST /api/search`.
 - Answering in `POST /api/chat`: retrieves 5 chunks, builds a system prompt with page-tagged excerpts, streams with the chosen Ollama model through `useChat`.
 - A dedicated `/chat` page with a transcript, a typing indicator, send/stop controls, Markdown rendering of answers, and a model switcher ("Answering with …") that changes the chat model per question.
+- Document lifecycle: `POST /api/documents` deletes one document (`docId`) or every other one (`keepDocId`); `GET /api/documents` lists what is stored. Indexing keeps only the new document, "New PDF" deletes the current one, and the home page offers to resume a stored document.
 - A Postgres 17 + pgvector database defined with Drizzle: `chunks` (text, page, 1024-dim embedding, HNSW index) and `conversations` (empty, unused).
 
-Not implemented: writing to `conversations`, session history across reloads, README, and deployment notes.
+Not implemented: writing to `conversations` (so history does not survive a resume), and deployment notes for anything beyond local self-hosting.
 
 Decisions that are settled and should not be reopened without a reason:
 
@@ -114,6 +115,7 @@ app/
   PdfPreviewModal.tsx        # react-pdf preview and page navigation
   ChatPanel.tsx              # useChat transcript, Markdown answers, model switcher, send/stop
   chat/page.tsx              # chat page; reads docId, name and model from the URL
+  NewPdfLink.tsx             # client link that deletes the document, then returns home
   providers.ts               # Ollama model type and the fixed embedding model name
   ModelPicker.tsx            # single Model select, filtered to completion models
   ModelModal.tsx             # chat-model modal with indexing progress
@@ -122,6 +124,7 @@ app/
   api/embeddings/route.ts    # embeds a batch of chunks and inserts them
   api/search/route.ts        # returns the closest chunks for a question
   api/chat/route.ts          # retrieves, prompts and streams the answer
+  api/documents/route.ts     # GET lists stored documents, POST deletes one or all others
   globals.css                # Tailwind imports and theme tokens
 components/ui/               # shared UI primitives
 db/
@@ -148,7 +151,9 @@ public/
 - A status-keyed `styles` map controls border/icon classes. Dragging selects accepted styles; `isFilled` is derived from dragging or accepted status.
 - `PdfPreviewModal` is dynamically imported with `ssr: false`. It uses `Document` and `Page` from `react-pdf`; its PDF.js worker currently loads from an unpkg URL matching `pdfjs.version`.
 - `ModelModal` collects one Ollama model name. While indexing it shows a percentage bar driven by the `onProgress` callback, and it stays open if the request fails.
-- `ChatPanel` keeps its own `model` state, seeded from the URL. The transport has no body; each `sendMessage({ text }, { body: { docId, model } })` carries the current model, so switching applies to the next question while the transcript is preserved. The model list is fetched client-side from `/api/ollama/models` and filtered to `completion`.
+- `ChatPanel` keeps its own `model` state, seeded from the URL and defaulting to the first installed model when the URL has none. The transport has no body; each `sendMessage({ text }, { body: { docId, model } })` carries the current model, so switching applies to the next question while the transcript is preserved. The model list is fetched client-side from `/api/ollama/models` and filtered to `completion`.
+- Stored documents: `page.tsx` asks `GET /api/documents` on mount and renders a "Continue chatting with it" notice for the first result. There is at most one document, because indexing calls `POST /api/documents` with `keepDocId` before the first insert.
+- `NewPdfLink` posts `{ docId }` with `keepalive: true` before navigating home; the chat page no longer deletes on `pagehide`, because browsers cannot distinguish a reload from a close and reloading must keep the document.
 - `ModelPicker` lists Ollama models with the `completion` capability, shows "Loading models…" until `/api/ollama/models` settles, and only then shows the destructive "No models found" alert.
 - `providers.ts` keeps only `OllamaModel`, `Role`, and `EMBEDDING_MODEL` (`bge-m3`). Chat model names come from `/api/ollama/models`; nothing is hardcoded.
 - Class names come from two `cn` helpers: shadcn primitives import `cn` from the `cn` package, while `card`, `button`, and `layout` import it from `@/lib/utils` (which wraps `clsx` + `tailwind-merge`).
@@ -175,11 +180,14 @@ public/
 - `POST /api/embeddings` takes `{ docId, docName, chunks: [{ page, text }] }`, embeds with `bge-m3` and inserts the rows. It returns `{ inserted }`. Rejects with 400 on a non-array or empty `chunks`, a non-numeric `page`, a blank `text`, or more than 100 chunks. Returns 500 if vectors are not 1024 dims, and 500 on provider or insert failure.
 - `POST /api/search` takes `{ question, docId }` and returns `{ results: [{ text, page, similarity }] }`, highest similarity first, limit 5. `similarity` is `1 - cosineDistance`, so it is not a 0–1 confidence score.
 - `POST /api/chat` takes `{ messages, docId, model }`, retrieves 5 chunks for the last user message, and streams a UI message response. Returns 404 when the document has no chunks, 400 on bad input, 500 on failure.
+- `GET /api/documents` returns `{ documents: [{ docId, docName, passages, lastPage }] }` grouped from `chunks`.
+- `POST /api/documents` takes `{ docId }` (delete that document) or `{ keepDocId }` (delete every other one). Returns 400 unless exactly one valid UUID is supplied.
 - Ollama's `localhost` refers to the machine running the Next.js server. Accessing a user's local Ollama from a hosted deployment is an unresolved architecture decision.
 - The chat model picker filters the Ollama list by `completion` client-side and shows "Loading models…" until the request settles. The Finish button stays disabled until a model is selected.
 - Text extraction runs client-side in `page.tsx`, so the PDF is parsed in the browser rather than by the upload route.
 - Indexing runs from the browser, so the tab must stay open until it finishes. Measured on this machine: ~0.26 s per 500-word chunk, so 600 chunks ≈ 2.5 minutes.
-- `conversations` is never written; the transcript lives only in `useChat` state and is lost on reload.
+- `conversations` is never written; the transcript lives only in `useChat` state, so resuming a document starts a fresh chat.
+- The database holds at most one document. Closing the tab keeps it; reloading keeps it; the next upload or "New PDF" removes it.
 - Drag-time acceptance is optimistic; final drop validation may reject a file that appeared accepted while dragging.
 
 ## Planned work

@@ -81,22 +81,34 @@ DATABASE_URL=postgresql://docuchat:change-me@localhost:5432/docuchat
 3. You land on `/chat`. Ask a question. The answer streams in and names the page it came from.
 4. Switch models from the dropdown under the transcript at any time — it applies to your next question, and the conversation is kept.
 
-Opening `/chat?docId=…&name=…&model=…` directly works too, which is useful for testing with an already-indexed document.
+5. If you close the tab and come back, the home page offers **"Continue chatting with it"** for the document still in the database.
+
+Opening `/chat?docId=…&name=…` directly works too, which is useful for testing with an already-indexed document. Without a `model` parameter the first installed model is selected and can be changed from the dropdown.
+
+### One document at a time
+
+The app stores exactly one indexed document:
+
+- Indexing a PDF deletes any previously stored one.
+- **New PDF** deletes the current document before returning home.
+- Closing the tab keeps it, so you can continue later.
+
+Nothing accumulates, and there is no cleanup job to run.
 
 ## Limits
 
 - **Single user.** There is no authentication. Run it on your own machine; do not expose it.
 - **One embedding model per database.** The column is `vector(1024)`. Changing the embedding model means dropping the index, altering the column, and re-indexing every document.
 - **Indexing happens in the browser.** Keep the tab open until it finishes. Measured roughly 0.26 s per 500-word chunk, so 600 chunks is about two and a half minutes.
-- **The transcript is not persisted.** The `conversations` table exists but is not written yet, so reloading `/chat` starts fresh.
+- **The transcript is not persisted.** The `conversations` table exists but is not written yet. Reloading or resuming a document gives you the PDF back, not the previous questions.
 - **Similarity scores are not calibrated.** `1 - cosine distance` on `bge-m3` topped out near 0.49 on a real Greek document; a 0.5 cutoff would return nothing. There is no cutoff today.
 - **Text extraction is best-effort.** Some PDFs produce odd spacing, especially Greek, which slightly hurts retrieval quality.
 
 ## Project status
 
-Working end to end: upload, index, retrieve, stream a grounded answer, switch models.
+Working end to end: upload, index, retrieve, stream a grounded answer, switch models mid-conversation, resume a stored document.
 
-Next: persist conversations, then a README-level deployment path. Route by route details and the working conventions live in [`AGENTS.md`](./AGENTS.md).
+Next: persist conversations in the `conversations` table and reload them on `/chat`. Route-level details and the working conventions live in [`AGENTS.md`](./AGENTS.md).
 
 ## License
 
