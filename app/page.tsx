@@ -1,21 +1,93 @@
 'use client'
 
 import { useState } from "react";
-import { FileRejection, useDropzone } from "react-dropzone";
+import { useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
+import { type ModelConfig } from "./ModelModal";
+type ExtractedPage = {
+  pageNumber: number
+  text: string
+}
+
+type PdfChunk = {
+  id: string
+  pageNumber: number
+  text: string
+}
+
+async function extractPdfPages(
+  file: File
+): Promise<ExtractedPage[]> {
+  const { pdfjs } = await import("react-pdf")
+  pdfjs.GlobalWorkerOptions.workerSrc =
+    `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
+
+  const buffer = await file.arrayBuffer()
+  const bytes = new Uint8Array(buffer)
+  const loadingTask = pdfjs.getDocument({
+    data: bytes
+  })
+  const pdf = await loadingTask.promise
+  const extractedPages: ExtractedPage[] = []
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+    const curPage = await pdf.getPage(pageNumber)
+    const curContent = await curPage.getTextContent()
+    const pageText = curContent.items.map((item) => {
+      if (!("str" in item)) return ""
+
+      return item.str + (item.hasEOL ? "\n" : " ")
+    })
+    .join("")
+    .trim()
+
+    extractedPages.push({
+      pageNumber,
+      text: pageText,
+    })
+  }
+  return extractedPages
+}
+
+function chunkPdfPage(pages: ExtractedPage[]): PdfChunk[] {
+  const chunks: PdfChunk[] = []
+  const chunkSize = 500
+  const overlap = 100
+  const stepSize = chunkSize - overlap
+  for (const page of pages) {
+    const words = page.text.split(/\s+/)
+    for (let start = 0; start < words.length; start += stepSize) {
+      const chunkWords = words.slice(start, start + chunkSize)
+      const chunkText = chunkWords.join(' ')
+      const chunk: PdfChunk = {
+        id: `page-${page.pageNumber}-start-${start}`,
+        pageNumber: page.pageNumber,
+        text: chunkText,
+      }
+      chunks.push(chunk)
+    }
+  }
+  return chunks
+}
 
 export default function Home() {
-  const [status, setStatus] = useState<"idle" | "accepted" | "rejected">("idle");
+  const [status, setStatus] = useState<"idle" | "uploading" | "accepted" | "rejected">("idle");
   const [pdfName, setPdfName] = useState('')
   const [pdfFile, setPdfFile] = useState<File | null>(null)
-
+  const [modelConfig, setModelConfig] = useState<ModelConfig | null>(null)
+  const [pdfChunks, setPdfChunks] = useState<PdfChunk[]>([])
+  const [docId, setDocId] = useState<string>()
+  
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
     maxFiles: 1,
-    onDrop: async (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+    onDrop: async (acceptedFiles: File[]) => {
       if (!acceptedFiles[0]) { setStatus("rejected"); return;}
+
+      const file = acceptedFiles[0]
+
       const fd = new FormData()
-      fd.append('file', acceptedFiles[0])
+      fd.append('file', file)
+      setStatus("uploading")
       try {
         const res = await fetch('/api/upload', { method: 'POST', body: fd})
         if (!res.ok) { 
@@ -26,8 +98,11 @@ export default function Home() {
           console.error(err.error)
           return;
         }
-        const data = await res.json()
-        console.log(data)
+        const extractedPages = await extractPdfPages(file)
+        const chunks = chunkPdfPage(extractedPages)
+        setPdfChunks(chunks)
+        setDocId(crypto.randomUUID())
+        console.log(chunks)
       } catch (e) {
           console.error(e)
           setStatus("rejected")
@@ -44,10 +119,55 @@ export default function Home() {
     setStatus('idle')
     setPdfFile(null)
     setPdfName('')
+    setDocId(undefined)
+  }
+
+  async function handleModelConfig(config: ModelConfig) {
+    setModelConfig(config)
+    const chunks = pdfChunks.map(chunk => ({ text: chunk.text, page: chunk.pageNumber }))
+    const BATCH = 100
+    let inserted = 0
+
+    if (chunks.length === 0) {
+      console.warn("No chunks to save — the PDF produced no text.")
+      return
+    }
+
+    try {
+      for (let i = 0; i < chunks.length; i += BATCH) {
+        const batch = chunks.slice(i, i + BATCH)
+
+        const rs = await fetch('/api/embeddings', {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            docId,
+            docName: pdfName,
+            chunks: batch
+          })
+        })
+
+        const data = await rs.json()
+
+        if (!rs.ok) {
+          console.error(data.error)
+          return
+        }
+
+        inserted += data.inserted
+      }
+
+      console.log("Chunks:", chunks.length, "Saved:", inserted)
+    } catch (error) {
+      console.error("Embedding request failed:", error)
+    }
   }
 
   const styles = {
     idle:     { border: "border-red-300", icon: "text-red-400" },
+    uploading: { border: "border-yellow-300", icon: "text-yellow-400" },
     accepted: { border: "border-green-400", icon: "text-green-400" },
     rejected: { border: "border-red-500", icon: "text-red-500" },
   };
@@ -66,6 +186,7 @@ export default function Home() {
           pdfFile={pdfFile}
           status={status}
           setIdle={setIdle}
+          onModelConfig={handleModelConfig}
         />
     </section>
   );
