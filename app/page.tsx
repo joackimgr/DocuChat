@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import PdfUpload from './PdfUpload'
-import { type ModelConfig } from "./ModelModal";
+import { type ModelConfig, type ProgressHandler } from "./ModelModal";
 type ExtractedPage = {
   pageNumber: number
   text: string
@@ -73,9 +74,10 @@ export default function Home() {
   const [status, setStatus] = useState<"idle" | "uploading" | "accepted" | "rejected">("idle");
   const [pdfName, setPdfName] = useState('')
   const [pdfFile, setPdfFile] = useState<File | null>(null)
-  const [modelConfig, setModelConfig] = useState<ModelConfig | null>(null)
   const [pdfChunks, setPdfChunks] = useState<PdfChunk[]>([])
   const [docId, setDocId] = useState<string>()
+
+  const router = useRouter()
   
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { 'application/pdf': ['.pdf'] }, 
@@ -122,16 +124,16 @@ export default function Home() {
     setDocId(undefined)
   }
 
-  async function handleModelConfig(config: ModelConfig) {
-    setModelConfig(config)
+  async function handleModelConfig(config: ModelConfig, onProgress?: ProgressHandler) {
     const chunks = pdfChunks.map(chunk => ({ text: chunk.text, page: chunk.pageNumber }))
-    const BATCH = 100
+    const BATCH = 20
     let inserted = 0
 
     if (chunks.length === 0) {
-      console.warn("No chunks to save — the PDF produced no text.")
-      return
+      throw new Error("The PDF produced no text to read.")
     }
+
+    onProgress?.(0, chunks.length)
 
     try {
       for (let i = 0; i < chunks.length; i += BATCH) {
@@ -152,16 +154,29 @@ export default function Home() {
         const data = await rs.json()
 
         if (!rs.ok) {
-          console.error(data.error)
-          return
+          throw new Error(data.error ?? "Storing the document failed.")
         }
 
         inserted += data.inserted
+        onProgress?.(inserted, chunks.length)
       }
 
       console.log("Chunks:", chunks.length, "Saved:", inserted)
+
+      if (!docId) {
+        throw new Error("No document id — cannot open the chat page.")
+      }
+
+      const params = new URLSearchParams({
+        docId,
+        name: pdfName,
+        model: config.llm.model,
+      })
+
+      router.push(`/chat?${params.toString()}`)
     } catch (error) {
       console.error("Embedding request failed:", error)
+      throw error
     }
   }
 
