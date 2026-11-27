@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -17,13 +17,33 @@ type PdfPreviewModalProps = {
 export default function PdfPreviewModal({ pdfFile, pdfName, onClose }: PdfPreviewModalProps) {
   const [pageNumber, setPageNumber] = useState(1)
   const [numPages, setNumPages] = useState(0)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    dialogRef.current?.focus()
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
-      <div className="flex flex-col items-center gap-3 bg-white rounded-2xl shadow-xl max-w-[90vw] max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="preview-modal-title"
+        tabIndex={-1}
+        ref={dialogRef}
+        className="flex flex-col items-center gap-3 bg-white rounded-2xl shadow-xl max-w-[90vw] max-h-[90vh] overflow-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between w-full text-gray-400 p-6">
-          <span className="text-black">{pdfName}</span>
-          <Button onClick={onClose} className="hover:text-gray-600 cursor-pointer">✕</Button>
+          <span id="preview-modal-title" className="text-black">{pdfName}</span>
+          <Button onClick={onClose} aria-label="Close preview" className="hover:text-gray-600 cursor-pointer">✕</Button>
         </div>
         <div className="overflow-scroll">
           <Document file={pdfFile} onLoadSuccess={({ numPages }) => setNumPages(numPages)}>

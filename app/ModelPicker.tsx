@@ -1,6 +1,6 @@
 'use client'
 
-import { type OllamaModel, PROVIDERS, type ProviderId, type Role } from './providers'
+import { type OllamaModel } from './providers'
 import { Field, FieldLabel } from '@/components/ui/field'
 import {
   Select,
@@ -11,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Input } from '@/components/ui/input'
 import { AlertCircleIcon } from 'lucide-react';
 import {
   Alert,
@@ -19,99 +18,54 @@ import {
   AlertTitle
 } from "@/components/ui/alert"
 
-
-type ModelChoice =  { 
-    provider: ProviderId
-    model: string
-}
-
 type ModelPickerProps = {
-    role: Role
-    value: ModelChoice
-    onChange: (choice: ModelChoice) => void
-    apiKey: string
-    onApiKeyChange: (key: string) => void
+    value: string
+    onChange: (model: string) => void
     ollamaModels: OllamaModel[]
+    isLoadingModels?: boolean
 }
 
-export default function ModelPicker({ role, value, onChange, apiKey, onApiKeyChange, ollamaModels }: ModelPickerProps) {
-    const providerOptions = (Object.keys(PROVIDERS) as ProviderId[])
-    .filter(id => PROVIDERS[id].supports.includes(role))
-    .map(id => ({ value: id, label: PROVIDERS[id].label }))
-
-    const requiredCapability = role === "llm" ? "completion" : "embedding"
-    const modelOptions = value.provider === "ollama"
-        ? ollamaModels
-            .filter(model => model.capabilities.includes(requiredCapability))
-            .map(model => model.name)
-        : PROVIDERS[value.provider].models[role]
+export default function ModelPicker({ value, onChange, ollamaModels, isLoadingModels = false }: ModelPickerProps) {
+    const modelOptions = ollamaModels
+        .filter(model => model.capabilities.includes("completion"))
+        .map(model => model.name)
 
     const modelItems = modelOptions.map(model => <SelectItem value={model} key={model}>{model}</SelectItem>)
 
     return (
          <>
-            <Select value={value.provider} onValueChange={(p) => {
-            if (p) {
-              onChange({ ...value, provider: p, model: ''})
-            }
-            }}>
-            <Field>
-              <FieldLabel>Provider</FieldLabel>
-              <SelectTrigger className='w-full'>
-                <SelectValue />
-              </SelectTrigger>
-            </Field>
-            <SelectContent>
-                <SelectGroup>
-                    <SelectLabel>Provider</SelectLabel>
-                    {providerOptions.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                        {item.label}
-                    </SelectItem>
-                    ))}
-                </SelectGroup>
-            </SelectContent>
-            </Select>
-            {value.provider == 'openai' && (
-                <Field className='mt-5'>
-                    <FieldLabel htmlFor='api-key'>API Key</FieldLabel>
-                    <Input 
-                    id='api-key'
-                    type='password'
-                    placeholder='sk-...'
-                    value={apiKey}
-                    onChange={(e) => onApiKeyChange(e.target.value)}
-                    />
-                </Field>
-            )}
             {modelOptions.length > 0 && (
-            <Select 
-                value={value.model}
-                onValueChange={(m) => {
-                    if (m) {
-                        onChange({ ...value, model: m})
-                }
-            }}>
-                <Field className='mt-5'>
-                <FieldLabel>Model</FieldLabel>
-                <SelectTrigger>
-                    <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                </Field>
-                <SelectContent>
-                <SelectGroup>
-                    {modelItems}
-                </SelectGroup>
-                </SelectContent>
-            </Select>
+                <Select value={value} onValueChange={(m) => { if (m) onChange(m) }}>
+                    <Field className='w-48'>
+                        <FieldLabel>Model</FieldLabel>
+                        <SelectTrigger className='w-full h-7 rounded-md px-2.5 text-[0.8125rem]'>
+                            <SelectValue placeholder="Select model" />
+                        </SelectTrigger>
+                    </Field>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Model</SelectLabel>
+                            {modelItems}
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
             )}
-            {modelOptions.length == 0 && (
+
+            {isLoadingModels && (
+                <p role="status" aria-live="polite" className='mt-5 text-sm text-gray-500'>
+                    Loading models…
+                </p>
+            )}
+
+            {!isLoadingModels && modelOptions.length == 0 && (
                 <Alert variant='destructive' className='max-w-md mt-5'>
-                <AlertCircleIcon />
-                <AlertTitle>Models not found</AlertTitle>
-                <AlertDescription>
-                    We couldn&apos;t find any models from {PROVIDERS[value.provider].label}. Make sure Ollama is running and you&apos;ve pulled at least one model (e.g. ollama pull llama3.2), then try again.
-                </AlertDescription>
+                    <AlertCircleIcon />
+                    <AlertTitle>No models found</AlertTitle>
+                    <AlertDescription>
+                        Ollama did not report any chat model. Make sure it is running and
+                        you have pulled at least one model, for example{' '}
+                        <code>ollama pull llama3.2</code>. Then reopen this dialog.
+                    </AlertDescription>
                 </Alert>
             )}
          </>

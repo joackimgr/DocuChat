@@ -10,7 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Button } from '@/components/ui/button'
 import dynamic from 'next/dynamic'
 import ModelModal from "./ModelModal"
-import { type ModelConfig } from './ModelModal'
+import { type ModelConfig, type ProgressHandler } from './ModelModal'
 
 const PdfPreviewModal = dynamic(() => import('./PdfPreviewModal'), {
     ssr: false,
@@ -29,7 +29,7 @@ type PdfUploadProps = {
     pdfFile: File | null
     status: "idle" | "uploading" | "accepted" | "rejected"
     setIdle: () => void
-    onModelConfig: (config: ModelConfig) => void
+    onModelConfig: (config: ModelConfig, onProgress?: ProgressHandler) => Promise<void> | void
 }
 
 export default function PdfUpload({ getRootProps, getInputProps, active, isFilled, pdfName, pdfFile, status, setIdle, onModelConfig }: PdfUploadProps) {
@@ -63,14 +63,14 @@ export default function PdfUpload({ getRootProps, getInputProps, active, isFille
                         <UploadCloud size={16} /> Browse files
                         </Button>
 
-                        <input {...getInputProps()} />
+                        <input {...getInputProps()} aria-label="Choose a PDF file" />
                     </CardContent>
                 </Card>
             }
             {status == "accepted" && (
                 <>
                     <Card className={`group w-full max-w-xl border-2 border-dashed border-green-500 bg-green-100/10 shadow-lg shadow-green-200 ring-0 scale-[1.02] animate-in fade-in-0 duration-200`}>
-                        <CardContent className='flex flex-col items-center justify-center gap-5 py-14 text-center'>        
+                        <CardContent className='flex flex-col items-center justify-center gap-5 py-14 text-center' role="status" aria-live="polite">
                         <div className={`flex h-20 w-20 items-center justify-center rounded-full transition-colors duration-300 bg-green-100`}>
                             <File size={40} className={`${active.icon} transition-transform duration-300 ${isFilled ? "scale-110" : "group-hover:scale-105"}`} />
                         </div>
@@ -93,7 +93,7 @@ export default function PdfUpload({ getRootProps, getInputProps, active, isFille
             )}
             {status == "rejected" && (
                 <Card className='group w-full max-w-xl border-2 border-dashed border-red-500 bg-red-100/10 shadow-lg shadow-red-200 ring-0 scale-[1.02]'>
-                    <CardContent className='flex flex-col items-center justify-center gap-5 py-14 text-center'>
+                    <CardContent className='flex flex-col items-center justify-center gap-5 py-14 text-center' role="status" aria-live="polite">
                         <div className={`flex h-20 w-20 items-center justify-center rounded-full transition-colors duration-300
                             ${isFilled ? "bg-green-100" : "bg-red-50"}`}>
                             <X  size={40} className={`${active.icon} transition-transform duration-300 ${isFilled ? "scale-110" : "group-hover:scale-105"}`} />
@@ -101,13 +101,13 @@ export default function PdfUpload({ getRootProps, getInputProps, active, isFille
                          <div>
                             <p className="mt-1 text-lg text-gray-500">This file type isn&apos;t accepted!</p>
                         </div>
-                        <Button onClick={setIdle} size='lg' className='bg-red-300 ${isFilled ? "bg-green-400" : ""} hover:bg-red-400 cursor-pointer text-lg'>Try again</Button>
+                        <Button onClick={setIdle} size='lg' className={`bg-red-300 ${isFilled ? "bg-green-400" : ""} hover:bg-red-400 cursor-pointer text-lg`}>Try again</Button>
                     </CardContent>
                 </Card>
             )}
             {status == "uploading" &&
                 <Card className="w-full max-w-xl border-2 border-dashed border-yellow-300 bg-yellow-50/50 shadow-lg shadow-yellow-100 animate-in fade-in-0 duration-200">
-                    <CardContent className="flex flex-col items-center justify-center gap-5 py-14 text-center">
+                    <CardContent className="flex flex-col items-center justify-center gap-5 py-14 text-center" role="status" aria-live="polite">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-yellow-100">
                         <Spinner className="text-yellow-500 animate-spin size-4" />
                     </div>
